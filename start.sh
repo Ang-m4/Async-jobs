@@ -4,21 +4,18 @@
 set -e
 
 # Ensure the logging folder exists
-if [ -z "$ITS_JOBS_LOGGING_FOLDER" ]; then
-    echo "Error: ITS_JOBS_LOGGING_FOLDER is not set."
-    exit 1
-fi
+mkdir -p $ITS_JOBS_LOGGING_FOLDER
 
 # Start the Celery worker for the "maintenance" queue
 echo "Starting Celery worker for the 'maintenance' queue..."
-celery -A app worker --loglevel=info -Q maintenance \
+celery -A app worker --loglevel=info -n maintenance -Q maintenance \
     > "$ITS_JOBS_LOGGING_FOLDER/WORKER_MAINTENANCE.log" 2>&1 &
 
 WORKER_MAINTENANCE_PID=$!
 
 
 echo "Starting Celery worker for the 'notifications' queue..."
-celery -A app worker --loglevel=info -Q notifications \
+celery -A app worker --loglevel=info -n notifications -Q notifications \
     > "$ITS_JOBS_LOGGING_FOLDER/WORKER_NOTIFICATIONS.log" 2>&1 &
 
 WORKER_NOTIFICATIONS_PID=$!

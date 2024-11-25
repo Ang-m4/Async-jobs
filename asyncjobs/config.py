@@ -49,7 +49,7 @@ class CeleryConfig():
     #     },
 
     # }
-    
+
     task_default_queue = 'default'
     task_default_exchange = 'default'
     task_default_routing_key = 'default'
