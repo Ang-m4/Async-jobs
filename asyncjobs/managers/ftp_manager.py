@@ -1,8 +1,16 @@
-import os
+"""
+This module contains the FTPManager class, which is used to manage
+FTP backups.
+
+"""
+
+
 import ftplib
-from decouple import config
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
+
+from decouple import config
 
 from asyncjobs.managers import util
 
@@ -10,16 +18,24 @@ logger = logging.getLogger(__name__)
 
 
 class FTPManager():
+    """
+    The FTPManager class is used to manage FTP backups.
+
+    """
 
     FTP_SERVER_HOST = config("FTP_SERVER_HOST")
     FTP_SERVER_USER = config("FTP_SERVER_USER")
     FTP_SERVER_PASS = config("FTP_SERVER_PASS")
     FTP_SERVER_ROOT = config("FTP_SERVER_ROOT")
 
+
     def generate_ftp_backup(self):
         """
-        Connect to the FTP server and download the root directory to the local backup path.
+        Connect to the FTP server and download the root directory to the
+        local backup path.
+
         """
+
         time_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         backup_path = f"{config('BACKUP_FOLDER')}/ftp/{time_str}/"
 
@@ -28,17 +44,23 @@ class FTPManager():
             os.makedirs(backup_path)
 
         try:
-            with ftplib.FTP(self.FTP_SERVER_HOST, self.FTP_SERVER_USER, self.FTP_SERVER_PASS) as ftp:
+            with ftplib.FTP(self.FTP_SERVER_HOST,
+                            self.FTP_SERVER_USER,
+                            self.FTP_SERVER_PASS) as ftp:
                 ftp.cwd(self.FTP_SERVER_ROOT)  # Change to the root directory
                 self.download_directory(ftp, ".", backup_path)
                 logger.info("FTP backup completed successfully.")
-        except Exception as e:
+
+        except ftplib.all_errors as e:
             logger.error("Error downloading backup from FTP server: %s", e)
+
 
     def download_directory(self, ftp, remote_path, local_path):
         """
         Recursively download a directory from the FTP server.
+
         """
+
         if not os.path.exists(local_path):
             os.makedirs(local_path)
 
@@ -63,7 +85,7 @@ class FTPManager():
                     with open(local_entry_path, "wb") as f:
                         ftp.retrbinary(f"RETR {remote_entry_path}", f.write)
 
-        except Exception as e:
+        except ftplib.all_errors as e:
             logger.error("Error downloading directory from FTP: %s", e)
 
     def compress_old_backup_files(self):
@@ -73,5 +95,3 @@ class FTPManager():
         """
         backup_folder = f"{config('BACKUP_FOLDER')}/ftp"
         util.compress_old_files(backup_folder)
-        
-    

@@ -1,15 +1,34 @@
+"""
+This module contains utility functions for the asyncjobs package.
 
-import os
-import zipfile
-import shutil
+"""
+
 import logging
-
+import os
+import shutil
+import zipfile
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
 
 def compress_old_files(backup_folder):
+    """
+    Compresses old files in the specified backup folder into a ZIP archive.
+
+    Args:
+        backup_folder (str): The path to the backup folder.
+
+    Raises:
+        OSError: If there is an error creating the archive folder or
+        compressing the files.
+
+        Exception: If there is any other error during the compression process.
+
+    Returns:
+        None
+
+    """
 
     current_time = datetime.now()
     archive_folder = f"{backup_folder}/backup_archive"
@@ -34,10 +53,11 @@ def compress_old_files(backup_folder):
                     logger.info('Folder: %s is newer than %s',
                                 folder, current_time)
 
-        # Compress the folders into a ZIP file 
+        # Compress the folders into a ZIP file
         if folders_to_compress:
             zip_file_path = os.path.join(
-                archive_folder, f"backup_{current_time.strftime('%Y-%m-%d_%H-%M-%S')}.zip")
+                archive_folder,
+                f"backup_{current_time.strftime('%Y-%m-%d_%H-%M-%S')}.zip")
             with zipfile.ZipFile(zip_file_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 for folder in folders_to_compress:
                     for root, _, files in os.walk(folder):
@@ -54,5 +74,5 @@ def compress_old_files(backup_folder):
 
             logger.info('Created ZIP file: %s', zip_file_path)
 
-    except Exception as e:
+    except OSError as e:
         logger.error('Error compressing old files: %s', e)

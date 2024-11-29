@@ -23,5 +23,4 @@ app = Celery(
 
 app.config_from_object(CeleryConfig)
 
-from asyncjobs.tasks import notifications
-from asyncjobs.tasks import maintenance
+from asyncjobs.tasks import maintenance, notifications

@@ -1,20 +1,45 @@
+"""
+This module contains the EmailNotificationManager class, which is used to send
+emails to the users of the application in case of request uploads and
+verification codes.
+
+"""
+
+import logging
+import smtplib
+import socket
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from smtplib import SMTPException
 from string import Template
+
 from decouple import config
-import smtplib
-import logging
 
 logger = logging.getLogger(__name__)
 
 
 class EmailNotificationManager:
+    """
+    This class is used to send emails to the users of the application.
+
+    """
+
     SMTP_SERVER = config("ITS_SMTP_SERVER")
     SMTP_PORT = config("ITS_SMTP_PORT")
     SENDER_EMAIL = config("ITS_EMAIL_ACCOUNT")
     SENDER_PASSWORD = config("ITS_EMAIL_PASSWORD")
 
     def _send_email(self, recipient, subject, html_body):
+        """
+        Sends an email to the specified recipient.
+
+        Args:
+            recipient (str): The email address of the recipient.
+            subject (str): The subject of the email.
+            html_body (str): The HTML content of the email body.
+
+        """
+
         try:
             server = smtplib.SMTP(self.SMTP_SERVER, self.SMTP_PORT)
             server.starttls()
@@ -27,23 +52,53 @@ class EmailNotificationManager:
             msg.attach(MIMEText(html_body, "html"))
 
             server.sendmail(self.SENDER_EMAIL, recipient, msg.as_string())
-            logger.info(f"Email sent to {recipient}")
+            logger.info("Email sent to %s", recipient)
 
-        except Exception as e:
-            logger.error(f"An error occurred while sending the email: {e}")
+        except SMTPException as e:
+            logger.error("SMTP error occurred while sending the email: %s", e)
+        except socket.error as e:
+            logger.error(
+                "Network error occurred while sending the email: %s", e)
 
         finally:
             server.quit()
 
     def _load_template(self, template_path):
+        """
+        Load and return a template from the given file path.
+
+        Args:
+            template_path (str): The path to the template file.
+
+        Returns:
+            Template: The loaded template object.
+
+        Raises:
+            Exception: If an error occurs while loading the template.
+
+        """
+
         try:
-            with open(template_path) as file:
+            with open(template_path, encoding="utf-8") as file:
                 return Template(file.read())
         except Exception as e:
-            logger.error(f"An error occurred while loading the template: {e}")
-            raise
+            logger.error("An error occurred while loading the template: %s", e)
+            raise e
 
     def send_verification_email(self, recipient, code):
+        """
+        Sends a verification email to the specified recipient with the given
+        verification code.
+
+        Args:
+            recipient (str): The email address of the recipient.
+            code (str): The verification code to be included in the email.
+
+        Returns:
+            None
+
+        """
+
         template = self._load_template(
             "asyncjobs/assets/html/recovery-password.html")
         html_body = template.substitute(code=code)
@@ -51,6 +106,17 @@ class EmailNotificationManager:
             recipient, "Verification Code - ITS RFC APP", html_body)
 
     def send_certificates_request_email(self, recipients, data):
+        """
+        Sends an email with the details of a certificates request.
+
+        Args:
+            recipients (list): List of email addresses to send the email to.
+            data (dict): Dictionary containing the data for the certificates request.
+
+        Returns:
+            None
+        """
+
         template = self._load_template(
             "asyncjobs/assets/html/certificate-request.html")
         certificates_html = "".join(
@@ -74,6 +140,18 @@ class EmailNotificationManager:
                 recipient, "Request Details - ITS RFC APP", html_body)
 
     def send_firmware_request_email(self, recipients, data):
+        """
+        Sends a firmware request email to the specified recipients.
+
+        Args:
+            recipients (list): A list of email addresses to send the email to.
+            data (dict): A dictionary containing the data for the email.
+
+        Returns:
+            None
+
+        """
+
         template = self._load_template(
             "asyncjobs/assets/html/firmware-request.html")
         buses = data["config_file"].get("buses", [])

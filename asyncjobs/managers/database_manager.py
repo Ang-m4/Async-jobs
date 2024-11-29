@@ -1,17 +1,30 @@
-from ctypes import cast
-from pymongo import MongoClient
-from decouple import config
-import logging
-from datetime import datetime, timedelta
+"""
+This contains the DatabaseManager class, which is used to manage the database
+connection and backup generation.
+
+"""
+
 import json
-from bson import json_util
+import logging
 import os
+from datetime import datetime
+
+from bson import json_util
+from decouple import config
+from pymongo import MongoClient
+from pymongo.errors import ConnectionFailure, PyMongoError
+
 from asyncjobs.managers import util
 
 logger = logging.getLogger(__name__)
 
 
 class DatabaseManager():
+    """
+    This class is used to manage the database connection and backup generation.
+
+    """
+
     CENTRAL_DB_HOST = config("CENTRAL_DB_HOST")
     CENTRAL_DB_PORT = config("CENTRAL_DB_PORT")
     CENTRAL_DB_NAME = config("CENTRAL_DB_NAME")
@@ -37,8 +50,9 @@ class DatabaseManager():
                 authSource=self.CENTRAL_DB_AUTH_SOURCE
             )
             self.db = self.client[self.CENTRAL_DB_NAME]
-        except Exception as e:
-            logger.error('Error connecting to the database: %s', e)
+
+        except ConnectionFailure as conn_err:
+            logger.error('Error connecting to the database: %s', conn_err)
 
     def generate_backup(self):
         """
@@ -56,13 +70,17 @@ class DatabaseManager():
         for collection in self.collections:
             try:
                 collection_data = self.db[collection].find()
-                with open(f'{backup_path}{collection}.json', 'w') as f:
+                with open(f'{backup_path}{collection}.json', 'w',
+                          encoding="utf-8") as f:
                     json.dump(list(collection_data), f,
                               default=json_util.default)
 
-            except Exception as e:
+            except PyMongoError as e:
                 logger.error(
                     'Error getting data from collection %s: %s', collection, e)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    'Error parsing JSON data for collection %s: %s', collection, e)
                 continue
 
             logger.info('Backup generated successfully!')

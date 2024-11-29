@@ -4,13 +4,11 @@ environment
 
 """
 
-
 from time import sleep
 
 from celery.utils.log import get_task_logger
 
 from app import app
-
 from asyncjobs.managers.database_manager import DatabaseManager
 from asyncjobs.managers.ftp_manager import FTPManager
 

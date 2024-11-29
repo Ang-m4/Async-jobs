@@ -3,8 +3,6 @@ This module contains the tasks for sending notifications to users.
 
 """
 
-from time import sleep
-
 from celery.utils.log import get_task_logger
 
 from app import app
@@ -15,6 +13,7 @@ QUEUE = 'notifications'
 
 manager = EmailNotificationManager()
 
+
 @app.task(name='tasks.notifications.send_verification_code', queue=QUEUE)
 def send_verification_code(to: str, code: str):
     """
@@ -22,13 +21,13 @@ def send_verification_code(to: str, code: str):
 
     """
 
-    logger.info(f'Sending verification code... {code} -> {to}')
+    logger.info('Sending verification code... %s -> %s', code, to)
     manager.send_verification_email(to, code)
     logger.info('Verification code sent!')
 
 
 @app.task(name='tasks.notifications.firmware_request_upload', queue=QUEUE)
-def send_request_upload_email(to: list[str], data: dict):
+def send_firmware_request_upload_email(to: list[str], data: dict):
     """
     This function is used to send an email to the user requesting an upload
     of a file.
@@ -41,7 +40,7 @@ def send_request_upload_email(to: list[str], data: dict):
 
 
 @app.task(name='tasks.notifications.certificates_request_upload', queue=QUEUE)
-def send_request_upload_email(to: list[str], data: dict):
+def send_certificates_request_upload_email(to: list[str], data: dict):
     """
     This function is used to send an email to the user requesting an upload
     of a file.
