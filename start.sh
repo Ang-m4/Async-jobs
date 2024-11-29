@@ -39,7 +39,8 @@ celery -A app inspect registered || {
     exit 1
 }
 
-# Keep the script alive to allow the worker and beat processes to continue running
+# Keep the script alive to allow the worker and beat processes to continue
+# running
 echo "Celery worker and beat scheduler are running."
 echo "Worker maintenance PID: $WORKER_MAINTENANCE_PID"
 echo "Worker notifications PID: $WORKER_NOTIFICATIONS_PID"

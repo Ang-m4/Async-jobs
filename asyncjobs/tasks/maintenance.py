@@ -11,8 +11,15 @@ from celery.utils.log import get_task_logger
 
 from app import app
 
+from asyncjobs.managers.database_manager import DatabaseManager
+from asyncjobs.managers.ftp_manager import FTPManager
+
 logger = get_task_logger(__name__)
 QUEUE = 'maintenance'
+
+database_manager = DatabaseManager()
+ftp_manager = FTPManager()
+# log_manager = LogManager()
 
 
 @app.task(name='tasks.maintenance.ftp_backup', queue=QUEUE)
@@ -23,9 +30,8 @@ def ftp_backup():
 
     """
 
-    logger.info('Backing up database...')
-    sleep(3)
-    logger.info('Backup complete!')
+    ftp_manager.generate_ftp_backup()
+    logger.info('FTP backup complete!')
 
 
 @app.task(name='tasks.maintenance.database_backup', queue=QUEUE)
@@ -35,32 +41,29 @@ def database_backup():
     and saving it to a local directory
 
     """
-
-    logger.info('Backing up database...')
-    sleep(3)
+    database_manager.generate_backup()
     logger.info('Backup complete!')
 
 
-@app.task(name='tasks.maintenance.ftp_cleanup', queue=QUEUE)
-def ftp_cleanup():
+@app.task(name='tasks.maintenance.compress_old_files', queue=QUEUE)
+def compress_old_files():
     """
-    This function is used to clean up the FTP folder by removing old files
-    and duplicates.
-
-    """
-
-    logger.info('Cleaning up old backups...')
-    sleep(3)
-    logger.info('Cleanup complete!')
-
-
-@app.task(name='tasks.maintenance.logging_cleanup', queue=QUEUE)
-def logging_cleanup():
-    """
-    This function is used to clean up the log files by removing old log files
+    This function is used to compress old files in the logs directory,
+    backups directory, and other directories
 
     """
+    database_manager.compress_old_files()
+    ftp_manager.compress_old_backup_files()
 
-    logger.info('Cleaning up old log files...')
+
+@app.task(name='tasks.maintenance.local_store_cleanup', queue=QUEUE)
+def local_store_cleanup():
+    """
+    This function is used to clean up the local store by removing old files,
+    duplicates and tmp files.
+
+    """
+
+    logger.info('Cleaning up local store...')
     sleep(3)
     logger.info('Cleanup complete!')

@@ -3,6 +3,8 @@ This module is used to define the Celery configuration and logger
 for the application.
 """
 
+from celery.schedules import crontab
+
 
 class CeleryConfig():
     """
@@ -23,32 +25,25 @@ class CeleryConfig():
         }
     }
 
-    # beat_schedule = {
-    #     'backup-database-every-30-sec': {
-    #         'task': 'tasks.maintenance.database_backup',
-    #         'schedule': 30.0,
-    #         'args': (),
-    #     },
+    beat_schedule = {
+        'backup-database-every-3-days': {
+            'task': 'tasks.maintenance.database_backup',
+            'schedule': crontab(day_of_month='*/3', hour=0, minute=0),
+            'args': (),
+        },
 
-    #     'backup-ftp-every-1-min': {
-    #         'task': 'tasks.maintenance.ftp_backup',
-    #         'schedule': 60.0,
-    #         'args': (),
-    #     },
+        'compress-old-files-every-month': {
+            'task': 'tasks.maintenance.compress_old_files',
+            'schedule': crontab(day_of_month=1, hour=0, minute=0),
+            'args': (),
+        },
 
-    #     'cleanup-ftp-every-2-min': {
-    #         'task': 'tasks.maintenance.ftp_cleanup',
-    #         'schedule': 120.0,
-    #         'args': (),
-    #     },
-
-    #     'cleanup-logs-every-5-min': {
-    #         'task': 'tasks.maintenance.logging_cleanup',
-    #         'schedule': 300.0,
-    #         'args': (),
-    #     },
-
-    # }
+        'backup-ftp-every-friday': {
+            'task': 'tasks.maintenance.ftp_backup',
+            'schedule': crontab(day_of_week=5, hour=0, minute=0),
+            'args': (),
+        },
+    }
 
     task_default_queue = 'default'
     task_default_exchange = 'default'
